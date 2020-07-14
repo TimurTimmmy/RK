@@ -1,0 +1,11 @@
+D:\Projects\RK\RK\bin\Debug\RK.exe.config
+D:\Projects\RK\RK\bin\Debug\RK.exe
+D:\Projects\RK\RK\bin\Debug\RK.pdb
+D:\Projects\RK\RK\obj\Debug\RK.csprojAssemblyReference.cache
+D:\Projects\RK\RK\obj\Debug\RK.csproj.ResolveComReference.cache
+D:\Projects\RK\RK\obj\Debug\RK.Form1.resources
+D:\Projects\RK\RK\obj\Debug\RK.Properties.Resources.resources
+D:\Projects\RK\RK\obj\Debug\RK.csproj.GenerateResource.cache
+D:\Projects\RK\RK\obj\Debug\RK.csproj.CoreCompileInputs.cache
+D:\Projects\RK\RK\obj\Debug\RK.exe
+D:\Projects\RK\RK\obj\Debug\RK.pdb
