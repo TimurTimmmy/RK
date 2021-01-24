@@ -1,0 +1,292 @@
+﻿using ExcelDataReader;
+using System;
+using ExcelLibrary;
+using System.Data;
+using System.Diagnostics;
+using System.IO;
+using System.Windows.Forms;
+using Excel = Microsoft.Office.Interop.Excel;
+using ExcelLibrary.SpreadSheet;
+
+namespace RK
+{
+    public partial class Form1 : Form
+    {
+        public Form1()
+        {
+            InitializeComponent();
+            FirstFileButton.Enabled = true;
+            SecondFileButton.Enabled = false;
+            button1.Enabled = false;
+        }
+
+        public string FirstFileString;
+        public string SecondFileString;
+        public string Dir = Environment.CurrentDirectory;
+        public string ShopID;
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+            button1.Enabled = false;
+
+            Excel.Application excelApp = new Excel.Application();
+            excelApp.Visible = false;
+
+            string[,] arr1 = FromExcel(excelApp, FirstFileString);
+            string[,] arr2 = FromExcel(excelApp, SecondFileString);
+
+            if (arr1.GetLength(0) != arr2.GetLength(0))
+            {
+                MessageBox.Show("Разное чилсло строк в файлах");
+                Application.Exit();
+            }
+
+            Excel._Workbook NewBook = (Excel._Workbook)(excelApp.Workbooks.Add(Type.Missing));
+            Excel._Worksheet NewSheet = (Excel._Worksheet)NewBook.ActiveSheet;
+            string[,] NewArr = new string[arr1.GetLength(0), 4];
+
+            //int result;
+            //int div = Math.DivRem(lastRow1, 100, out result);
+
+                NewArr[0, 0] = "Логин";
+                NewArr[0, 1] = "Идентификатор";
+                NewArr[0, 2] = "Ставка";
+                NewArr[0, 3] = "ShopID";
+                for (int i = 1; i < arr1.GetLength(0); i++)
+                {
+                    if (arr1[i, 1] == arr2[i, 0])
+                    {
+                        NewArr[i, 0] = arr1[i, 0];
+                        NewArr[i, 1] = arr2[i, 22];
+                        try
+                        {
+                            NewArr[i, 1] = NewArr[i, 1].Trim((char)160);
+                        }
+                        catch
+                        {
+                            NewArr[i, 1] = NewArr[i, 1];
+                        }
+                        NewArr[i, 2] = arr2[i, 7];
+                        NewArr[i, 3] = ShopID;
+                    }
+                }
+            
+
+            for (int i = 0; i < arr1.GetLength(0); i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    NewSheet.Cells[i+1, j+1] = NewArr[i, j];
+                    NewSheet.Cells[i + 1, j + 1].NumberFormat = "@"; //текстовый формат ячеек
+                }
+            }
+
+            //string savepath = string.Format("F:\\RKdocs\\Admin_{0}{1}{2}.xlsx", DateTime.Now.Day, DateTime.Now.Month, DateTime.Now.Year);
+            string savepath = string.Format("{0}\\Admin_{1}{2}{3}.xls", Dir, DateTime.Now.Day, DateTime.Now.Month, DateTime.Now.Year);
+            NewBook.SaveAs(savepath, Excel.XlFileFormat.xlExcel8); //Сохраняем новую книгу в старом формате XLS         
+
+            NewBook.Close(false, Type.Missing, Type.Missing);
+            excelApp.Quit(); //Выйти из экселя
+            GC.Collect(); //Убрать мусор
+            MessageBox.Show("Файл сформирован");
+            Process.Start(Dir);
+            button1.Enabled = true;
+        }
+
+        private void FirstFileButton_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog1.ShowDialog() == DialogResult.Cancel)
+                return;
+            // получаем выбранный файл
+            FirstFileString = openFileDialog1.FileName;
+            FirstFile.Text = FirstFileString;
+            SecondFileButton.Enabled = true;
+        }
+
+        private void SecondFileButton_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog2.ShowDialog() == DialogResult.Cancel)
+                return;
+            // получаем выбранный файл
+            SecondFileString = openFileDialog2.FileName;
+            SecondFile.Text = SecondFileString;
+        }
+
+        private void KiwiRadio_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButton radioButton = (RadioButton)sender;
+            if (radioButton.Checked)
+            {
+                ShopID = "56893";
+                button1.Enabled = true;
+            }
+        }
+
+        private void RibRadio_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButton radioButton = (RadioButton)sender;
+            if (radioButton.Checked)
+            {
+                ShopID = "103370";
+                button1.Enabled = true;
+            }
+        }
+
+        private void PsRadio_CheckedChanged(object sender, EventArgs e)
+        {
+            RadioButton radioButton = (RadioButton)sender;
+            if (radioButton.Checked)
+            {
+                ShopID = "165290";
+                button1.Enabled = true;
+            }
+        }
+
+        public string[,] SliceArray(int count, int lastRow1, int lastRow2, string[,] arr1, string[,] arr2)
+        {
+            string[,] NewArr = new string[count, 4];
+            if (lastRow1 == lastRow2)
+            {                             
+                    NewArr[0, 0] = "Логин";
+                    NewArr[0, 1] = "Идентификатор";
+                    NewArr[0, 2] = "Ставка";
+                    NewArr[0, 3] = "ShopID";
+                    for (int i = 1; i < count; i++)
+                    {
+                        if (arr1[i, 1] == arr2[i, 0])
+                        {
+                            NewArr[i, 0] = arr1[i, 0];
+                            NewArr[i, 1] = arr2[i, 22];
+                            try
+                            {
+                                NewArr[i, 1] = NewArr[i, 1].Trim((char)160);
+                            }
+                            catch
+                            {
+                                NewArr[i, 1] = NewArr[i, 1];
+                            }
+                            NewArr[i, 2] = arr2[i, 7];
+                            NewArr[i, 3] = ShopID;
+                        }
+                    }
+            }
+            return NewArr;
+        }
+
+        public string[,] FromExcel(Excel.Application excelApp, string file)
+        {
+            Excel.Workbook book = excelApp.Workbooks.Open(file);
+            Excel.Worksheet sheet = (Excel.Worksheet)excelApp.Worksheets.get_Item(1);
+            var lastCell = sheet.Cells.SpecialCells(Excel.XlCellType.xlCellTypeLastCell);
+            int lastColumn = (int)lastCell.Column;
+            int lastRow = (int)lastCell.Row;
+            string[,] arr = new string[lastRow, lastColumn];
+
+            for (int i = 1; i <= lastRow; i++)
+            {
+                for (int j = 1; j <= lastColumn; j++)
+                {
+                    arr[i - 1, j - 1] = Convert.ToString(sheet.Cells[i, j].Value);
+                }
+            }
+            book.Close(false, Type.Missing, Type.Missing); //Закрыть не сохраняя
+            excelApp.Quit(); //Выйти из экселя
+            GC.Collect(); //Убрать мусор
+            return arr;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            var b = ToArr(ReadExcel(FirstFileString));
+            var c = ToArr(ReadExcel(SecondFileString));
+            var d = NewArr(b, c);
+
+            WriteExcel(d);
+        }
+
+        public DataSet ReadExcel (string filename)
+        {
+            using (var streamExcel = File.Open(filename, FileMode.Open, FileAccess.Read))
+            {
+                using (var excelReader = ExcelReaderFactory.CreateReader(streamExcel))
+                {
+                    var result = excelReader.AsDataSet();
+                    excelReader.Close();
+                    streamExcel.Close();
+                    return result;
+                }
+            }
+        }
+
+        public string[,] ToArr(DataSet dataset)
+        {
+            var rows = dataset.Tables[0].Rows;
+            var col = dataset.Tables[0].Columns;
+            string[,] arr = new string[rows.Count, col.Count];
+
+            for (int i = 0; i < rows.Count; i++)
+            {
+                for (int j = 0; j < col.Count; j++)
+                {
+                    arr[i, j] = dataset.Tables[0].Rows[i][j].ToString();
+                }
+            }
+            return arr;
+        }
+
+        public string[,] NewArr(string[,] FirstArr, string[,] SecondArr)
+        {
+            int rows = FirstArr.GetLength(0);
+            string[,] NewArr = new string[rows,4];
+            if (FirstArr.GetLength(0) == SecondArr.GetLength(0))
+            {
+                NewArr[0, 0] = "Логин";
+                NewArr[0, 1] = "Идентификатор";
+                NewArr[0, 2] = "Ставка";
+                NewArr[0, 3] = "ShopID";
+                for (int i = 1; i < rows; i++)
+                {
+                    if (FirstArr[i, 1] == SecondArr[i, 0])
+                    {
+                        NewArr[i, 0] = FirstArr[i, 0];
+                        NewArr[i, 1] = SecondArr[i, 22];
+                        try
+                        {
+                            NewArr[i, 1] = NewArr[i, 1].Trim((char)160);
+                        }
+                        catch
+                        {
+                            NewArr[i, 1] = NewArr[i, 1];
+                        }
+                        NewArr[i, 2] = SecondArr[i, 7];
+                        NewArr[i, 3] = ShopID;
+                    }
+                }
+            } else
+            {
+                MessageBox.Show("Не верное кол-во строк в файлах");
+            }
+            return NewArr;
+        }
+        public void WriteExcel(string[,] InputArr)
+        {
+            string SavePath = string.Format("{0}\\Admin_{1}{2}{3}.xls", Dir, DateTime.Now.Day, DateTime.Now.Month, DateTime.Now.Year);
+            Workbook WB = new Workbook();
+            Worksheet WorkSheet = new Worksheet("First Sheet");
+            
+
+            for (int i = 0; i < InputArr.GetLength(0); i++)
+            {
+                for (int j = 0; j < InputArr.GetLength(1); j++)
+                {
+                    WorkSheet.Cells[i, j] = new Cell(InputArr[i, j]);
+                }
+            }
+
+            WB.Worksheets.Add(WorkSheet);
+            WB.Save(SavePath);
+            
+        }
+
+    }
+}
